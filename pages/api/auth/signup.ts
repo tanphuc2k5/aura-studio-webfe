@@ -20,7 +20,7 @@ export default async function handler(
     }
 
     // Kiểm tra email tồn tại
-    const existingUser = await sql(`SELECT id FROM users WHERE email = $1`, [email]);
+    const existingUser = await sql`SELECT id FROM users WHERE email = ${email}`;
     if (existingUser.length > 0) {
       return res.status(400).json({ message: 'Email này đã được sử dụng' });
     }
@@ -29,10 +29,7 @@ export default async function handler(
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Lưu vào database
-    await sql(
-      `INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, 'user')`,
-      [name, email, hashedPassword]
-    );
+    await sql`INSERT INTO users (name, email, password, role) VALUES (${name}, ${email}, ${hashedPassword}, 'user')`;
 
     return res.status(201).json({ message: 'Đăng ký thành công' });
   } catch (error: any) {

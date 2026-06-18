@@ -108,9 +108,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (response.ok) {
-        const data = await response.json();
-        const mockUser = { name: data.user.name, email: data.user.email, phone: "" };
-        setUser(mockUser);
         return true;
       }
       return false;
