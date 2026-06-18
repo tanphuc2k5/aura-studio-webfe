@@ -2,8 +2,8 @@ import NextAuth, { type DefaultSession } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
-import fs from "fs";
-import path from "path";
+import { neon } from "@neondatabase/serverless";
+import bcrypt from "bcrypt";
 
 declare module "next-auth" {
   interface Session {
@@ -42,36 +42,32 @@ export default NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const filePath = path.join(process.cwd(), "data", "users.json");
+        const sql = neon(process.env.DATABASE_URL!);
 
-        let users = [];
-        if (fs.existsSync(filePath)) {
-          const fileData = fs.readFileSync(filePath, "utf-8");
-          users = JSON.parse(fileData);
-        }
+        try {
+          const users = await sql(
+            "SELECT * FROM users WHERE email = $1 OR name = $1 LIMIT 1",
+            [credentials?.username]
+          );
 
-        interface UserData {
-          id: string;
-          name: string;
-          email: string;
-          password: string;
-          role?: string;
-        }
+          if (users.length > 0) {
+            const user = users[0];
+            const isPasswordMatch = await bcrypt.compare(
+              credentials?.password || "",
+              user.password
+            );
 
-        const user = users.find(
-          (u: UserData) =>
-            (u.email === credentials?.username ||
-              u.name === credentials?.username) &&
-            u.password === credentials?.password,
-        );
-
-        if (user) {
-          return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-          };
+            if (isPasswordMatch) {
+              return {
+                id: user.id.toString(),
+                name: user.name,
+                email: user.email,
+                role: user.role,
+              };
+            }
+          }
+        } catch (error) {
+          console.error("Auth Error:", error);
         }
         return null;
       },

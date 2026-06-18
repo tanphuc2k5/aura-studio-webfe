@@ -12,5 +12,12 @@
     "email": "phucdeptrai123@gmail.com",
     "password": "12345678",
     "role": "user"
+  },
+  {
+    "id": "1781791005123",
+    "name": "Lê Tấn Phúc",
+    "email": "phuc45@gmail.com",
+    "password": "12345678",
+    "role": "user"
   }
 ]

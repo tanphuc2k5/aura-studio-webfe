@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
-import path from 'path';
+import { neon } from '@neondatabase/serverless';
+import bcrypt from 'bcrypt';
 
 export default async function handler(
   req: NextApiRequest,
@@ -10,6 +10,8 @@ export default async function handler(
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
+  const sql = neon(process.env.DATABASE_URL!);
+
   try {
     const { name, email, password } = req.body;
 
@@ -17,31 +19,25 @@ export default async function handler(
       return res.status(400).json({ message: 'Thiếu thông tin bắt buộc' });
     }
 
-    const filePath = path.join(process.cwd(), 'data', 'users.json');
-    const fileData = fs.readFileSync(filePath, 'utf-8');
-    const users = JSON.parse(fileData);
-
     // Kiểm tra email tồn tại
-    const userExists = users.find((u: any) => u.email === email);
-    if (userExists) {
+    const existingUser = await sql(`SELECT id FROM users WHERE email = $1`, [email]);
+    if (existingUser.length > 0) {
       return res.status(400).json({ message: 'Email này đã được sử dụng' });
     }
 
-    // Tạo user mới
-    const newUser = {
-      id: Date.now().toString(),
-      name,
-      email,
-      password, // Trong thực tế: await bcrypt.hash(password, 10)
-      role: 'user'
-    };
+    // Mã hóa mật khẩu
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    users.push(newUser);
-    fs.writeFileSync(filePath, JSON.stringify(users, null, 2));
+    // Lưu vào database
+    await sql(
+      `INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, 'user')`,
+      [name, email, hashedPassword]
+    );
 
-    return res.status(201).json({ message: 'Đăng ký thành công', user: newUser });
-  } catch (error) {
+    return res.status(201).json({ message: 'Đăng ký thành công' });
+  } catch (error: any) {
     console.error('Signup Error:', error);
-    return res.status(500).json({ message: 'Lỗi hệ thống khi đăng ký' });
+    return res.status(500).json({ message: 'Lỗi hệ thống khi đăng ký', error: error.message });
   }
 }
+
