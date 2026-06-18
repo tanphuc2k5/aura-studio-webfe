@@ -45,16 +45,15 @@ export default NextAuth({
         const sql = neon(process.env.DATABASE_URL!);
 
         try {
-          const users = await sql(
-            "SELECT * FROM users WHERE email = $1 OR name = $1 LIMIT 1",
-            [credentials?.username]
-          );
+          const users = await sql`
+            SELECT * FROM users WHERE email = ${credentials?.username} OR name = ${credentials?.username} LIMIT 1
+          `;
 
           if (users.length > 0) {
             const user = users[0];
             const isPasswordMatch = await bcrypt.compare(
               credentials?.password || "",
-              user.password
+              user.password,
             );
 
             if (isPasswordMatch) {
