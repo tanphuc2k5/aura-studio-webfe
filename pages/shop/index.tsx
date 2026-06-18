@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { PRODUCTS } from "@/utils/mockData";
+import { PRODUCTS, Product } from "@/utils/mockData";
 import { useCart } from "@/context/CartContext";
 import toast from "react-hot-toast";
+import QuickAddModal from "@/components/QuickAddModal";
 
 const CATEGORIES = ["All", "Clothing", "Shoes", "Hats", "Accessories"];
 const SIZES = ["S", "M", "L", "XL", "39", "40", "41", "42", "One Size"];
@@ -14,6 +15,7 @@ const PRODUCTS_PER_PAGE = 9;
 
 export default function Shop() {
   const { addToCart } = useCart();
+  const [quickAddProduct, setQuickAddProduct] = useState<Product | null>(null);
   const router = useRouter();
   const { search, category } = router.query;
   
@@ -76,18 +78,29 @@ export default function Shop() {
     return filteredProducts.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
   }, [filteredProducts, currentPage]);
 
-  const handleQuickAdd = (product: typeof PRODUCTS[0]) => {
+  const handleQuickAdd = (product: Product) => {
+    setQuickAddProduct(product);
+  };
+
+  const handleConfirmQuickAdd = (product: Product, size: string, color: string) => {
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       image: product.images[0],
-      selectedSize: product.sizes[0],
-      selectedColor: product.colors[0],
+      selectedSize: size,
+      selectedColor: color,
       quantity: 1,
     });
     toast.success(`Đã thêm ${product.name} vào giỏ hàng!`, {
-      style: { borderRadius: '10px', background: '#111', color: '#fff', fontSize: '12px' },
+      style: {
+        borderRadius: '10px',
+        background: '#111',
+        color: '#fff',
+        fontSize: '12px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+      },
     });
   };
 
@@ -265,6 +278,13 @@ export default function Shop() {
       </main>
 
       <Footer />
+
+      <QuickAddModal
+        key={quickAddProduct?.id || "none"}
+        product={quickAddProduct}
+        onClose={() => setQuickAddProduct(null)}
+        onAddToCart={handleConfirmQuickAdd}
+      />
     </div>
   );
 }

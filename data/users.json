@@ -1,0 +1,16 @@
+[
+  {
+    "id": "admin-id",
+    "name": "Administrator",
+    "email": "admin@aura.studio",
+    "password": "tanphuc205",
+    "role": "admin"
+  },
+  {
+    "id": "1781789726733",
+    "name": "Lê Tấn Phúc",
+    "email": "phucdeptrai123@gmail.com",
+    "password": "12345678",
+    "role": "user"
+  }
+]

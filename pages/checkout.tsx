@@ -6,14 +6,7 @@ import Footer from "@/components/Footer";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
-
-const ADDRESS_DATA = {
-  "TP. Hồ Chí Minh": ["Quận 1", "Quận 3", "Quận 7", "Quận Gò Vấp", "Quận Bình Thạnh", "TP. Thủ Đức"],
-  "Hà Nội": ["Quận Hoàn Kiếm", "Quận Ba Đình", "Quận Đống Đa", "Quận Hai Bà Trưng", "Quận Cầu Giấy"],
-  "Đà Nẵng": ["Quận Hải Châu", "Quận Thanh Khê", "Quận Sơn Trà", "Quận Ngũ Hành Sơn"],
-  "Cần Thơ": ["Quận Ninh Kiều", "Quận Cái Răng", "Quận Bình Thủy"],
-  "Hải Phòng": ["Quận Hồng Bàng", "Quận Lê Chân", "Quận Ngô Quyền"]
-};
+import { VIETNAM_LOCATIONS, Province, District } from "../utils/vietnamLocations";
 
 export default function Checkout() {
   const { cart, totalPrice, clearCart } = useCart();
@@ -22,8 +15,8 @@ export default function Checkout() {
   const [isOrdering, setIsOrdering] = useState(false);
 
   // States cho địa chỉ
-  const [selectedProvince, setSelectedProvince] = useState("");
-  const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [selectedProvinceId, setSelectedProvinceId] = useState("");
+  const [selectedDistrictId, setSelectedDistrictId] = useState("");
   const [addressDetail, setDetail] = useState("");
   const [phone, setPhone] = useState(user?.phone || "");
 
@@ -42,7 +35,11 @@ export default function Checkout() {
 
   const handlePlaceOrder = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProvince || !selectedDistrict) {
+    
+    const provinceObj = VIETNAM_LOCATIONS.find((p: Province) => p.id === selectedProvinceId);
+    const districtObj = provinceObj?.districts.find((d: District) => d.id === selectedDistrictId);
+
+    if (!provinceObj || !districtObj) {
       toast.error("Vui lòng chọn đầy đủ Tỉnh/Thành và Quận/Huyện");
       return;
     }
@@ -59,9 +56,9 @@ export default function Checkout() {
         shippingAddress: {
           name: user?.name || "",
           phone,
-          province: selectedProvince,
-          district: selectedDistrict,
-          detail: addressDetail,
+          province: provinceObj.name,
+          district: districtObj.name,
+          detail: `${addressDetail}, ${districtObj.name}, ${provinceObj.name}`,
         },
       };
 
@@ -71,6 +68,9 @@ export default function Checkout() {
       router.push("/profile?tab=orders");
     }, 2000);
   };
+
+  const currentProvince = VIETNAM_LOCATIONS.find((p: Province) => p.id === selectedProvinceId);
+  const districts = currentProvince ? currentProvince.districts : [];
 
   if (!isAuthenticated || cart.length === 0) return null;
 
@@ -99,25 +99,25 @@ export default function Checkout() {
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-aura-gray-dark mb-2">Tỉnh / Thành phố</label>
                   <select 
                     required 
-                    value={selectedProvince}
-                    onChange={(e) => { setSelectedProvince(e.target.value); setSelectedDistrict(""); }}
+                    value={selectedProvinceId}
+                    onChange={(e) => { setSelectedProvinceId(e.target.value); setSelectedDistrictId(""); }}
                     className="w-full border-b border-aura-gray-medium py-3 text-sm focus:outline-none focus:border-aura-black transition-colors bg-transparent cursor-pointer"
                   >
                     <option value="">Chọn Tỉnh/Thành</option>
-                    {Object.keys(ADDRESS_DATA).map(p => <option key={p} value={p}>{p}</option>)}
+                    {VIETNAM_LOCATIONS.map((p: Province) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-aura-gray-dark mb-2">Quận / Huyện</label>
                   <select 
                     required 
-                    disabled={!selectedProvince}
-                    value={selectedDistrict}
-                    onChange={(e) => setSelectedDistrict(e.target.value)}
+                    disabled={!selectedProvinceId}
+                    value={selectedDistrictId}
+                    onChange={(e) => setSelectedDistrictId(e.target.value)}
                     className="w-full border-b border-aura-gray-medium py-3 text-sm focus:outline-none focus:border-aura-black transition-colors bg-transparent cursor-pointer disabled:opacity-50"
                   >
                     <option value="">Chọn Quận/Huyện</option>
-                    {selectedProvince && ADDRESS_DATA[selectedProvince as keyof typeof ADDRESS_DATA].map(d => <option key={d} value={d}>{d}</option>)}
+                    {districts.map((d: District) => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </div>
               </div>

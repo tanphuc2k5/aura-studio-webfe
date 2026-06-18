@@ -26,18 +26,29 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Tự động lưu giỏ hàng vào localStorage khi có thay đổi
+  // Khôi phục giỏ hàng từ localStorage khi mount
   useEffect(() => {
-    const savedCart = localStorage.getItem("aura-cart");
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
+    if (typeof window !== "undefined") {
+      const savedCart = localStorage.getItem("aura-cart");
+      if (savedCart) {
+        try {
+          setCart(JSON.parse(savedCart));
+        } catch (error) {
+          console.error("Failed to parse cart from localStorage", error);
+        }
+      }
+      setIsInitialized(true);
     }
   }, []);
 
+  // Lưu giỏ hàng vào localStorage khi có thay đổi (chỉ sau khi đã khởi tạo)
   useEffect(() => {
-    localStorage.setItem("aura-cart", JSON.stringify(cart));
-  }, [cart]);
+    if (isInitialized && typeof window !== "undefined") {
+      localStorage.setItem("aura-cart", JSON.stringify(cart));
+    }
+  }, [cart, isInitialized]);
 
   // Thêm sản phẩm vào giỏ
   const addToCart = (newItem: CartItem) => {

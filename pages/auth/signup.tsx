@@ -8,6 +8,7 @@ import * as z from "zod";
 import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import toast from "react-hot-toast";
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: "Tên phải có ít nhất 2 ký tự" }),
@@ -37,7 +38,19 @@ export default function Signup() {
     try {
       const success = await signup(data.name, data.email, data.password);
       if (success) {
-        router.push("/checkout");
+        toast.success("Đăng ký tài khoản thành công! Hệ thống sẽ chuyển bạn sang trang đăng nhập.", {
+          style: {
+            borderRadius: '10px',
+            background: '#111',
+            color: '#fff',
+            fontSize: '12px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+          },
+        });
+        setTimeout(() => {
+          router.push("/auth/signin");
+        }, 2000);
       } else {
         setError("Đăng ký thất bại. Vui lòng thử lại.");
       }
@@ -54,7 +67,7 @@ export default function Signup() {
         <title>Đăng ký | Aura Studio</title>
       </Head>
       <Header />
-      
+
       <main className="flex-grow flex flex-col md:flex-row-reverse">
         {/* Right: Lifestyle Image */}
         <div className="hidden md:block md:w-1/2 relative h-[calc(100vh-80px)]">
@@ -69,48 +82,80 @@ export default function Signup() {
         {/* Left: Signup Form */}
         <div className="w-full md:w-1/2 flex items-center justify-center p-8 md:p-16">
           <div className="max-w-md w-full">
-            <h2 className="text-3xl font-bold uppercase tracking-luxury mb-2">Tạo tài khoản</h2>
-            <p className="text-aura-gray-dark text-sm mb-12 uppercase tracking-widest">Trở thành một phần của Aura Studio</p>
+            <h2 className="text-3xl font-bold uppercase tracking-luxury mb-2">
+              Tạo tài khoản
+            </h2>
+            <p className="text-aura-gray-dark text-sm mb-12 uppercase tracking-widest">
+              Trở thành một phần của Aura Studio
+            </p>
 
-            {error && <p className="text-red-500 text-xs mb-6 uppercase tracking-wider font-bold">{error}</p>}
+            {error && (
+              <p className="text-red-500 text-xs mb-6 uppercase tracking-wider font-bold">
+                {error}
+              </p>
+            )}
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-aura-gray-dark mb-2">Họ và tên</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-aura-gray-dark mb-2">
+                  Họ và tên
+                </label>
                 <input
                   {...register("name")}
                   type="text"
                   className="w-full border-b border-aura-gray-medium py-3 text-sm focus:outline-none focus:border-aura-black transition-colors"
-                  placeholder="Nguyễn Văn A"
+                  placeholder="Nhập họ và tên"
                 />
-                {errors.name && <p className="text-red-500 text-[10px] mt-1 uppercase tracking-wider">{errors.name.message}</p>}
+                {errors.name && (
+                  <p className="text-red-500 text-[10px] mt-1 uppercase tracking-wider">
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-aura-gray-dark mb-2">Email</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-aura-gray-dark mb-2">
+                  Email
+                </label>
                 <input
                   {...register("email")}
                   type="email"
                   className="w-full border-b border-aura-gray-medium py-3 text-sm focus:outline-none focus:border-aura-black transition-colors"
                   placeholder="name@email.com"
                 />
-                {errors.email && <p className="text-red-500 text-[10px] mt-1 uppercase tracking-wider">{errors.email.message}</p>}
+                {errors.email && (
+                  <p className="text-red-500 text-[10px] mt-1 uppercase tracking-wider">
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-aura-gray-dark mb-2">Mật khẩu</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-aura-gray-dark mb-2">
+                  Mật khẩu
+                </label>
                 <input
                   {...register("password")}
                   type="password"
                   className="w-full border-b border-aura-gray-medium py-3 text-sm focus:outline-none focus:border-aura-black transition-colors"
                   placeholder="••••••••"
                 />
-                {errors.password && <p className="text-red-500 text-[10px] mt-1 uppercase tracking-wider">{errors.password.message}</p>}
+                {errors.password && (
+                  <p className="text-red-500 text-[10px] mt-1 uppercase tracking-wider">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center space-x-2">
-                <input type="checkbox" required className="w-4 h-4 accent-aura-black" />
-                <span className="text-[10px] uppercase tracking-widest text-aura-gray-dark">Tôi đồng ý với các điều khoản dịch vụ</span>
+                <input
+                  type="checkbox"
+                  required
+                  className="w-4 h-4 accent-aura-black"
+                />
+                <span className="text-[10px] uppercase tracking-widest text-aura-gray-dark">
+                  Tôi đồng ý với các điều khoản dịch vụ
+                </span>
               </div>
 
               <button
@@ -123,8 +168,13 @@ export default function Signup() {
             </form>
 
             <div className="mt-12 text-center">
-              <p className="text-aura-gray-dark text-xs uppercase tracking-widest mb-4">Đã có tài khoản?</p>
-              <Link href="/auth/signin" className="text-sm font-bold uppercase tracking-[0.1em] border-b-2 border-aura-black pb-1">
+              <p className="text-aura-gray-dark text-xs uppercase tracking-widest mb-4">
+                Đã có tài khoản?
+              </p>
+              <Link
+                href="/auth/signin"
+                className="text-sm font-bold uppercase tracking-[0.1em] border-b-2 border-aura-black pb-1"
+              >
                 Đăng nhập ngay
               </Link>
             </div>

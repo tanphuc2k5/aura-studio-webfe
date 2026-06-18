@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import { useSession, signOut } from "next-auth/react";
 
 interface User {
   name: string;
@@ -46,30 +47,44 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { data: session, status } = useSession();
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
   const router = useRouter();
 
+  // Sync NextAuth session with internal user state
   useEffect(() => {
-    const savedUser = localStorage.getItem("aura-user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    const savedOrders = localStorage.getItem("aura-orders");
-    if (savedOrders) {
-      setOrders(JSON.parse(savedOrders));
-    }
-    setIsLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("aura-user", JSON.stringify(user));
+    if (session?.user) {
+      setUser({
+        name: session.user.name || "Người dùng",
+        email: session.user.email || "",
+        phone: "",
+      });
     } else {
-      localStorage.removeItem("aura-user");
+      // Only clear if we are sure no other login method is active
+      if (status === "unauthenticated") {
+        setUser(null);
+      }
     }
-  }, [user]);
+  }, [session, status]);
+
+  // Persistence for Orders: Use localStorage as a mock DB since no real API is available
+  useEffect(() => {
+    const fetchOrders = async () => {
+      // In a real app: const response = await fetch(`/api/orders?userId=${session?.user?.id}`);
+      // const data = await response.json();
+      // setOrders(data);
+      
+      const savedOrders = localStorage.getItem("aura-orders");
+      if (savedOrders) {
+        setOrders(JSON.parse(savedOrders));
+      }
+    };
+    
+    if (session) {
+      fetchOrders();
+    }
+  }, [session]);
 
   useEffect(() => {
     localStorage.setItem("aura-orders", JSON.stringify(orders));
@@ -83,16 +98,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signup = async (name: string, email: string, password: string): Promise<boolean> => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    const mockUser = { name, email, phone: "" };
-    setUser(mockUser);
-    return true;
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const mockUser = { name: data.user.name, email: data.user.email, phone: "" };
+        setUser(mockUser);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Signup error:", error);
+      return false;
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await signOut({ callbackUrl: "/" });
     setUser(null);
     setOrders([]);
-    localStorage.removeItem("aura-user");
     localStorage.removeItem("aura-orders");
     router.push("/");
   };
@@ -120,7 +151,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
       }}
     >
-      {isLoaded ? children : <div className="min-h-screen bg-aura-gray-light" />}
+      {status === "loading" ? (
+        <div className="min-h-screen bg-aura-gray-light" />
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 };
