@@ -46,27 +46,25 @@ export default function Checkout() {
 
     setIsOrdering(true);
 
-    setTimeout(() => {
-      const newOrder = {
-        id: `AURA-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-        date: new Date().toLocaleDateString("vi-VN"),
-        items: [...cart],
-        totalPrice,
-        status: "Processing" as const,
-        shippingAddress: {
-          name: user?.name || "",
-          phone,
-          province: provinceObj.name,
-          district: districtObj.name,
-          detail: `${addressDetail}, ${districtObj.name}, ${provinceObj.name}`,
-        },
-      };
+    const newOrder = {
+      id: `AURA-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      date: new Date().toLocaleDateString("vi-VN"),
+      items: [...cart],
+      totalPrice,
+      status: "Processing" as const,
+      shippingAddress: {
+        name: user?.name || "",
+        phone,
+        province: provinceObj.name,
+        district: districtObj.name,
+        detail: `${addressDetail}, ${districtObj.name}, ${provinceObj.name}`,
+      },
+    };
 
-      addOrder(newOrder);
-      toast.success("Đặt hàng thành công!", { duration: 4000 });
-      clearCart();
-      router.push("/profile?tab=orders");
-    }, 2000);
+    addOrder(newOrder);
+    toast.success("Đặt hàng thành công!", { duration: 4000 });
+    clearCart();
+    router.push("/shop/success");
   };
 
   const currentProvince = VIETNAM_LOCATIONS.find((p: Province) => p.id === selectedProvinceId);
